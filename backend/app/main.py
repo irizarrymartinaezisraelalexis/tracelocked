@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.auth import router as auth_router
+from app.dashboard.router import router as dashboard_router
 from app.profiles.router import router as profile_router
 from app.routes import router as scan_router
 
@@ -14,12 +15,13 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
-app.include_router(scan_router)
 app.include_router(profile_router)
+app.include_router(scan_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
-async def root():
+def root():
     return {
         "app": "TraceLocked",
         "status": "online",
@@ -29,7 +31,7 @@ async def root():
 
 
 @app.get("/health")
-async def health():
+def health():
     return {
         "status": "healthy",
     }
