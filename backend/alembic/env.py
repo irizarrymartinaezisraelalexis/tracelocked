@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.database.connection import Base, DATABASE_URL
 from app.models.db_privacy_profile import DBPrivacyProfile  # noqa: F401
+from app.models.db_scan_result import DBScanResult  # noqa: F401
 from app.models.db_user import DBUser  # noqa: F401
 
 config = context.config
