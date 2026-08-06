@@ -4,14 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.connectors import connector_manager
 from app.database.connection import get_db
 from app.models.db_privacy_profile import DBPrivacyProfile
 from app.models.db_scan_result import DBScanResult
-from app.scan_engine.coordinator import ScanCoordinator
 
 router = APIRouter(prefix="/scan", tags=["Scan"])
-
-scan_coordinator = ScanCoordinator()
 
 
 @router.get("/")
@@ -19,6 +17,7 @@ def get_scan_status():
     return {
         "status": "ready",
         "message": "TraceLocked scan service is ready.",
+        "enabled_connectors": connector_manager.enabled_connector_count(),
     }
 
 
@@ -65,7 +64,7 @@ async def start_scan(
         ),
     }
 
-    matches = await scan_coordinator.run_scan(profile_data)
+    matches = await connector_manager.run_all(profile_data)
 
     saved_results = []
 
@@ -93,7 +92,7 @@ async def start_scan(
     return {
         "status": "completed",
         "profile_id": profile_id,
-        "sites_scanned": len(scan_coordinator.connectors),
+        "sites_scanned": connector_manager.enabled_connector_count(),
         "matches_found": len(saved_results),
         "matches": [
             {
