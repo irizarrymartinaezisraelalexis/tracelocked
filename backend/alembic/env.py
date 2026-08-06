@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.database.connection import Base, DATABASE_URL
+from app.models.db_privacy_profile import DBPrivacyProfile  # noqa: F401
 from app.models.db_user import DBUser  # noqa: F401
 
 config = context.config
@@ -13,7 +14,6 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Alembic treats percent signs specially, so encoded passwords need %% here.
 config.set_main_option(
     "sqlalchemy.url",
     DATABASE_URL.replace("%", "%%"),
