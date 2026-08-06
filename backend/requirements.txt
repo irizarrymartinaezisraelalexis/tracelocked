@@ -4,3 +4,7 @@ email-validator
 pwdlib[argon2]
 pyjwt
 python-multipart
+sqlalchemy
+alembic
+psycopg[binary]
+python-dotenv
