@@ -8,6 +8,7 @@ from app.connectors import connector_manager
 from app.database.connection import get_db
 from app.models.db_privacy_profile import DBPrivacyProfile
 from app.models.db_scan_result import DBScanResult
+from app.models.scan_result import ScanResultStatusUpdate
 
 router = APIRouter(prefix="/scan", tags=["Scan"])
 
@@ -149,4 +150,41 @@ def get_scan_results(
             }
             for result in results
         ],
+    }
+
+
+@router.patch("/results/{result_id}/status")
+def update_scan_result_status(
+    result_id: str,
+    update: ScanResultStatusUpdate,
+    db: Session = Depends(get_db),
+):
+    try:
+        parsed_result_id = UUID(result_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid scan result ID.",
+        )
+
+    result = db.get(
+        DBScanResult,
+        parsed_result_id,
+    )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scan result not found.",
+        )
+
+    result.status = update.status
+
+    db.commit()
+    db.refresh(result)
+
+    return {
+        "id": str(result.id),
+        "status": result.status,
+        "message": "Scan result status updated successfully.",
     }
