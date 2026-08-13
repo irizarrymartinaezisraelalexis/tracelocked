@@ -16,39 +16,32 @@ class ScanWebViewScreen extends StatefulWidget {
   final Map<String, dynamic> profile;
 
   @override
-  State<ScanWebViewScreen> createState() =>
-      _ScanWebViewScreenState();
+  State<ScanWebViewScreen> createState() => _ScanWebViewScreenState();
 }
 
-class _ScanWebViewScreenState
-    extends State<ScanWebViewScreen> {
+class _ScanWebViewScreenState extends State<ScanWebViewScreen> {
   late final WebViewController controller;
 
   int loadingProgress = 0;
   bool isFilling = false;
 
-  String get firstName =>
-      widget.profile['first_name']?.toString() ?? '';
+  bool spokeoAutofillRunning = false;
+  bool spokeoAutofillCompleted = false;
 
-  String get lastName =>
-      widget.profile['last_name']?.toString() ?? '';
+  String get firstName => widget.profile['first_name']?.toString() ?? '';
 
-  String get fullName =>
-      '$firstName $lastName'.trim();
+  String get lastName => widget.profile['last_name']?.toString() ?? '';
+
+  String get fullName => '$firstName $lastName'.trim();
 
   List<dynamic> get emails =>
-      widget.profile['email_addresses']
-          as List<dynamic>? ??
-      [];
+      widget.profile['email_addresses'] as List<dynamic>? ?? [];
 
   List<dynamic> get phones =>
-      widget.profile['phone_numbers']
-          as List<dynamic>? ??
-      [];
+      widget.profile['phone_numbers'] as List<dynamic>? ?? [];
 
   Map<String, dynamic> get address {
-    final raw =
-        widget.profile['current_address'];
+    final raw = widget.profile['current_address'];
 
     if (raw is Map) {
       return Map<String, dynamic>.from(raw);
@@ -57,27 +50,17 @@ class _ScanWebViewScreenState
     return {};
   }
 
-  String get email =>
-      emails.isEmpty
-          ? ''
-          : emails.first.toString();
+  String get email => emails.isEmpty ? '' : emails.first.toString();
 
-  String get phone =>
-      phones.isEmpty
-          ? ''
-          : phones.first.toString();
+  String get phone => phones.isEmpty ? '' : phones.first.toString();
 
-  String get street =>
-      address['street']?.toString() ?? '';
+  String get street => address['street']?.toString() ?? '';
 
-  String get city =>
-      address['city']?.toString() ?? '';
+  String get city => address['city']?.toString() ?? '';
 
-  String get state =>
-      address['state']?.toString() ?? '';
+  String get state => address['state']?.toString() ?? '';
 
-  String get postalCode =>
-      address['postal_code']?.toString() ?? '';
+  String get postalCode => address['postal_code']?.toString() ?? '';
 
   String get fullAddress {
     return [
@@ -85,9 +68,7 @@ class _ScanWebViewScreenState
       city,
       state,
       postalCode,
-    ].where(
-      (value) => value.trim().isNotEmpty,
-    ).join(', ');
+    ].where((value) => value.trim().isNotEmpty).join(', ');
   }
 
   String get location {
@@ -95,22 +76,15 @@ class _ScanWebViewScreenState
       city,
       state,
       postalCode,
-    ].where(
-      (value) => value.trim().isNotEmpty,
-    ).join(', ');
+    ].where((value) => value.trim().isNotEmpty).join(', ');
   }
 
-  String get normalizedQueryKind =>
-      widget.queryKind
-          .trim()
-          .toLowerCase();
+  String get normalizedQueryKind => widget.queryKind.trim().toLowerCase();
 
   bool get isTruePeopleSearch {
-    final name =
-        widget.sourceName.toLowerCase();
+    final name = widget.sourceName.toLowerCase();
 
-    final url =
-        widget.sourceUrl.toLowerCase();
+    final url = widget.sourceUrl.toLowerCase();
 
     return name.contains('truepeoplesearch') ||
         name.contains('true people search') ||
@@ -118,25 +92,19 @@ class _ScanWebViewScreenState
   }
 
   bool get isWhitepages {
-    final name =
-        widget.sourceName.toLowerCase();
+    final name = widget.sourceName.toLowerCase();
 
-    final url =
-        widget.sourceUrl.toLowerCase();
+    final url = widget.sourceUrl.toLowerCase();
 
-    return name.contains('whitepages') ||
-        url.contains('whitepages.com');
+    return name.contains('whitepages') || url.contains('whitepages.com');
   }
 
   bool get isSpokeo {
-    final name =
-        widget.sourceName.toLowerCase();
+    final name = widget.sourceName.toLowerCase();
 
-    final url =
-        widget.sourceUrl.toLowerCase();
+    final url = widget.sourceUrl.toLowerCase();
 
-    return name.contains('spokeo') ||
-        url.contains('spokeo.com');
+    return name.contains('spokeo') || url.contains('spokeo.com');
   }
 
   String get initialUrl {
@@ -161,9 +129,7 @@ class _ScanWebViewScreenState
     super.initState();
 
     controller = WebViewController()
-      ..setJavaScriptMode(
-        JavaScriptMode.unrestricted,
-      )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (progress) {
@@ -176,35 +142,21 @@ class _ScanWebViewScreenState
             });
           },
           onPageStarted: (url) {
-            debugPrint(
-              'WEBVIEW START: $url',
-            );
+            debugPrint('WEBVIEW START: $url');
           },
           onPageFinished: (url) async {
-            debugPrint(
-              'WEBVIEW FINISH: $url',
-            );
+            debugPrint('WEBVIEW FINISH: $url');
 
-            await Future<void>.delayed(
-              const Duration(
-                milliseconds: 700,
-              ),
-            );
+            await Future<void>.delayed(const Duration(milliseconds: 700));
 
             await _attemptAutofill();
 
-            await Future<void>.delayed(
-              const Duration(
-                milliseconds: 1200,
-              ),
-            );
+            await Future<void>.delayed(const Duration(milliseconds: 1200));
 
             await _attemptAutofill();
           },
           onNavigationRequest: (request) {
-            debugPrint(
-              'WEBVIEW NAV: ${request.url}',
-            );
+            debugPrint('WEBVIEW NAV: ${request.url}');
 
             return NavigationDecision.navigate;
           },
@@ -217,9 +169,7 @@ class _ScanWebViewScreenState
           },
         ),
       )
-      ..loadRequest(
-        Uri.parse(initialUrl),
-      );
+      ..loadRequest(Uri.parse(initialUrl));
   }
 
   Future<void> _attemptAutofill() async {
@@ -240,16 +190,15 @@ class _ScanWebViewScreenState
         await _fillGenericSource();
       }
     } catch (error) {
-      debugPrint(
-        'AUTOFILL ERROR: $error',
-      );
+      debugPrint('AUTOFILL ERROR: $error');
     } finally {
       isFilling = false;
     }
   }
 
   Future<void> _fillTruePeopleSearch() async {
-    final script = '''
+    final script =
+        '''
 (function() {
   const KIND =
     '${_escapeJs(normalizedQueryKind)}';
@@ -581,13 +530,12 @@ class _ScanWebViewScreenState
 })();
 ''';
 
-    await controller.runJavaScript(
-      script,
-    );
+    await controller.runJavaScript(script);
   }
 
   Future<void> _fillWhitepages() async {
-    final script = '''
+    final script =
+        '''
 (function() {
   const KIND =
     '${_escapeJs(normalizedQueryKind)}';
@@ -854,13 +802,81 @@ class _ScanWebViewScreenState
 })();
 ''';
 
-    await controller.runJavaScript(
-      script,
-    );
+    await controller.runJavaScript(script);
   }
 
   Future<void> _fillSpokeo() async {
-    final script = '''
+    if (spokeoAutofillCompleted || spokeoAutofillRunning) {
+      return;
+    }
+
+    spokeoAutofillRunning = true;
+
+    try {
+      String targetUrl;
+
+      switch (normalizedQueryKind) {
+        case 'phone':
+          targetUrl = 'https://www.spokeo.com/reverse-phone-lookup';
+          break;
+
+        case 'email':
+          targetUrl = 'https://www.spokeo.com/email-search';
+          break;
+
+        case 'address':
+        case 'previous_address':
+          targetUrl = 'https://www.spokeo.com/reverse-address-search';
+          break;
+
+        default:
+          targetUrl = 'https://www.spokeo.com/';
+          break;
+      }
+
+      final currentUrl = await controller.currentUrl();
+
+      final currentUri = currentUrl == null ? null : Uri.tryParse(currentUrl);
+
+      final targetUri = Uri.parse(targetUrl);
+
+      final currentPath = currentUri?.path ?? '';
+
+      final targetPath = targetUri.path;
+
+      /*
+       * Spokeo's actual routes discovered
+       * from the live page:
+       *
+       * NAME    /
+       * EMAIL   /email-search
+       * PHONE   /reverse-phone-lookup
+       * ADDRESS /reverse-address-search
+       *
+       * Navigate directly instead of trying
+       * to click the visible tabs.
+       */
+      if (currentPath != targetPath) {
+        await controller.loadRequest(targetUri);
+
+        /*
+         * Do not mark the task complete.
+         * onPageFinished will call
+         * _attemptAutofill() again on the
+         * correct Spokeo page.
+         */
+        return;
+      }
+
+      /*
+       * We are now on the correct Spokeo
+       * search page. Give its DOM time to
+       * settle before filling.
+       */
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+      final fillScript =
+          '''
 (function() {
   const KIND =
     '${_escapeJs(normalizedQueryKind)}';
@@ -879,7 +895,7 @@ class _ScanWebViewScreenState
   function norm(value) {
     return (value || '')
       .toString()
-      .replace(/\\\\s+/g, ' ')
+      .replace(/\\s+/g, ' ')
       .trim()
       .toLowerCase();
   }
@@ -901,15 +917,6 @@ class _ScanWebViewScreenState
       style.opacity !== '0' &&
       rect.width > 0 &&
       rect.height > 0
-    );
-  }
-
-  function textOf(el) {
-    return norm(
-      el.innerText ||
-      el.textContent ||
-      el.getAttribute('aria-label') ||
-      el.getAttribute('title')
     );
   }
 
@@ -937,7 +944,8 @@ class _ScanWebViewScreenState
       el.placeholder,
       el.getAttribute('aria-label'),
       el.getAttribute('autocomplete'),
-      el.getAttribute('title')
+      el.getAttribute('title'),
+      el.getAttribute('data-testid')
     ].filter(Boolean).join(' '));
   }
 
@@ -973,23 +981,17 @@ class _ScanWebViewScreenState
       el.dispatchEvent(
         new Event(
           'input',
-          { bubbles: true }
+          {
+            bubbles: true
+          }
         )
       );
 
       el.dispatchEvent(
         new Event(
           'change',
-          { bubbles: true }
-        )
-      );
-
-      el.dispatchEvent(
-        new KeyboardEvent(
-          'keyup',
           {
-            bubbles: true,
-            key: 'Unidentified'
+            bubbles: true
           }
         )
       );
@@ -1001,15 +1003,18 @@ class _ScanWebViewScreenState
   }
 
   function findField(words) {
-    const list = fields();
+    const list =
+      fields();
 
     for (
       let i = 0;
       i < list.length;
       i++
     ) {
-      const text =
-        describe(list[i]);
+      const description =
+        describe(
+          list[i]
+        );
 
       for (
         let j = 0;
@@ -1017,7 +1022,7 @@ class _ScanWebViewScreenState
         j++
       ) {
         if (
-          text.includes(
+          description.includes(
             norm(words[j])
           )
         ) {
@@ -1030,7 +1035,8 @@ class _ScanWebViewScreenState
   }
 
   function firstField() {
-    const list = fields();
+    const list =
+      fields();
 
     return list.length > 0
       ? list[0]
@@ -1038,287 +1044,44 @@ class _ScanWebViewScreenState
   }
 
   function secondField() {
-    const list = fields();
+    const list =
+      fields();
 
     return list.length > 1
       ? list[1]
       : null;
   }
 
-  function findTab(label) {
-    const wanted =
-      norm(label);
-
-    const elements =
-      Array.from(
-        document.querySelectorAll(
-          'button, a, [role="button"], [role="tab"], [tabindex], div, span'
-        )
-      );
-
-    for (
-      let i = 0;
-      i < elements.length;
-      i++
-    ) {
-      const el =
-        elements[i];
-
-      if (
-        visible(el) &&
-        textOf(el) === wanted
-      ) {
-        return el;
-      }
-    }
-
-    return null;
-  }
-
-  function realisticClick(el) {
-    if (!el) {
-      return false;
-    }
-
-    try {
-      el.scrollIntoView({
-        behavior: 'auto',
-        block: 'center',
-        inline: 'center'
-      });
-
-      const rect =
-        el.getBoundingClientRect();
-
-      const x =
-        rect.left +
-        rect.width / 2;
-
-      const y =
-        rect.top +
-        rect.height / 2;
-
-      const target =
-        document.elementFromPoint(
-          x,
-          y
-        ) ||
-        el;
-
-      const options = {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: x,
-        clientY: y
-      };
-
-      try {
-        target.dispatchEvent(
-          new PointerEvent(
-            'pointerdown',
-            options
-          )
-        );
-      } catch (_) {}
-
-      target.dispatchEvent(
-        new MouseEvent(
-          'mousedown',
-          options
-        )
-      );
-
-      try {
-        target.dispatchEvent(
-          new PointerEvent(
-            'pointerup',
-            options
-          )
-        );
-      } catch (_) {}
-
-      target.dispatchEvent(
-        new MouseEvent(
-          'mouseup',
-          options
-        )
-      );
-
-      target.dispatchEvent(
-        new MouseEvent(
-          'click',
-          options
-        )
-      );
-
-      try {
-        target.click();
-      } catch (_) {}
-
-      if (target !== el) {
-        try {
-          el.click();
-        } catch (_) {}
-      }
-
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function clickTab(label) {
-    return realisticClick(
-      findTab(label)
-    );
-  }
-
-  function fillPhone() {
-    return setValue(
+  if (KIND === 'phone') {
+    const field =
       findField([
         'phone',
         'number',
         'tel'
       ]) ||
-      firstField(),
-      DATA.phone
-    );
-  }
-
-  function fillEmail() {
-    return setValue(
-      findField([
-        'email',
-        'e-mail'
-      ]) ||
-      firstField(),
-      DATA.email
-    );
-  }
-
-  function fillAddress() {
-    return setValue(
-      findField([
-        'address',
-        'street'
-      ]) ||
-      firstField(),
-      DATA.address
-    );
-  }
-
-  function fillName() {
-    const nameField =
-      findField([
-        'name',
-        'person'
-      ]) ||
       firstField();
 
-    const locationField =
-      findField([
-        'city',
-        'state',
-        'zip',
-        'location'
-      ]) ||
-      secondField();
-
-    let changed =
-      setValue(
-        nameField,
-        DATA.fullName
-      );
-
-    if (!locationField) {
-      return changed;
-    }
-
-    if (KIND === 'name_city') {
-      changed =
-        setValue(
-          locationField,
-          DATA.city
-        ) ||
-        changed;
-    } else if (
-      KIND === 'name_location'
-    ) {
-      changed =
-        setValue(
-          locationField,
-          DATA.location
-        ) ||
-        changed;
-    } else if (
-      KIND === 'name_address'
-    ) {
-      changed =
-        setValue(
-          locationField,
-          DATA.address
-        ) ||
-        changed;
-    }
-
-    return changed;
-  }
-
-  function activateTab(
-    label,
-    fillFunction
-  ) {
-    clickTab(label);
-
-    setTimeout(
-      function() {
-        clickTab(label);
-      },
-      300
+    setValue(
+      field,
+      DATA.phone
     );
 
-    setTimeout(
-      function() {
-        clickTab(label);
-      },
-      800
-    );
-
-    setTimeout(
-      fillFunction,
-      450
-    );
-
-    setTimeout(
-      fillFunction,
-      1000
-    );
-
-    setTimeout(
-      fillFunction,
-      1700
-    );
-
-    setTimeout(
-      fillFunction,
-      2600
-    );
-  }
-
-  if (KIND === 'phone') {
-    activateTab(
-      'Phone',
-      fillPhone
-    );
     return;
   }
 
   if (KIND === 'email') {
-    activateTab(
-      'Email',
-      fillEmail
+    const field =
+      findField([
+        'email',
+        'e-mail'
+      ]) ||
+      firstField();
+
+    setValue(
+      field,
+      DATA.email
     );
+
     return;
   }
 
@@ -1326,27 +1089,95 @@ class _ScanWebViewScreenState
     KIND === 'address' ||
     KIND === 'previous_address'
   ) {
-    activateTab(
-      'Address',
-      fillAddress
+    /*
+     * We are already on Spokeo's dedicated
+     * /reverse-address-search page.
+     *
+     * Therefore the primary visible search
+     * input belongs to the Address search.
+     */
+    const field =
+      findField([
+        'address',
+        'street',
+        'location'
+      ]) ||
+      firstField();
+
+    setValue(
+      field,
+      DATA.address
     );
+
     return;
   }
 
-  activateTab(
-    'Name',
-    fillName
+  const nameField =
+    findField([
+      'name',
+      'person'
+    ]) ||
+    firstField();
+
+  setValue(
+    nameField,
+    DATA.fullName
   );
+
+  const locationField =
+    findField([
+      'city',
+      'state',
+      'zip',
+      'location'
+    ]) ||
+    secondField();
+
+  if (!locationField) {
+    return;
+  }
+
+  if (KIND === 'name_city') {
+    setValue(
+      locationField,
+      DATA.city
+    );
+  } else if (
+    KIND === 'name_location'
+  ) {
+    setValue(
+      locationField,
+      DATA.location
+    );
+  } else if (
+    KIND === 'name_address'
+  ) {
+    setValue(
+      locationField,
+      DATA.address
+    );
+  }
 })();
 ''';
 
-    await controller.runJavaScript(
-      script,
-    );
+      await controller.runJavaScript(fillScript);
+
+      spokeoAutofillCompleted = true;
+
+      debugPrint(
+        'SPOKEO AUTOFILL COMPLETE: '
+        '$normalizedQueryKind',
+      );
+    } catch (error) {
+      debugPrint('SPOKEO AUTOFILL ERROR: $error');
+    } finally {
+      spokeoAutofillRunning = false;
+    }
   }
 
   Future<void> _fillGenericSource() async {
-    final script = '''
+    final script =
+        '''
 (function() {
   const KIND =
     '${_escapeJs(normalizedQueryKind)}';
@@ -1475,31 +1306,15 @@ class _ScanWebViewScreenState
 })();
 ''';
 
-    await controller.runJavaScript(
-      script,
-    );
+    await controller.runJavaScript(script);
   }
 
-  String _escapeJs(
-    String value,
-  ) {
+  String _escapeJs(String value) {
     return value
-        .replaceAll(
-          r'\',
-          r'\\',
-        )
-        .replaceAll(
-          "'",
-          r"\'",
-        )
-        .replaceAll(
-          '\n',
-          r'\n',
-        )
-        .replaceAll(
-          '\r',
-          r'\r',
-        );
+        .replaceAll(r'\', r'\\')
+        .replaceAll("'", r"\'")
+        .replaceAll('\n', r'\n')
+        .replaceAll('\r', r'\r');
   }
 
   Future<void> retryAutofill() async {
@@ -1509,12 +1324,9 @@ class _ScanWebViewScreenState
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'TraceLock attempted to fill the current search form.',
-        ),
+        content: Text('TraceLock attempted to fill the current search form.'),
       ),
     );
   }
@@ -1537,59 +1349,40 @@ class _ScanWebViewScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
           onPressed: goBack,
-          icon: const Icon(
-            Icons.arrow_back,
-          ),
+          icon: const Icon(Icons.arrow_back),
         ),
-        title: Text(
-          widget.sourceName,
-        ),
+        title: Text(widget.sourceName),
         actions: [
           IconButton(
             tooltip: 'Fill search fields',
             onPressed: retryAutofill,
-            icon: const Icon(
-              Icons.auto_fix_high,
-            ),
+            icon: const Icon(Icons.auto_fix_high),
           ),
           IconButton(
             tooltip: 'Forward',
             onPressed: goForward,
-            icon: const Icon(
-              Icons.arrow_forward,
-            ),
+            icon: const Icon(Icons.arrow_forward),
           ),
           IconButton(
             tooltip: 'Reload',
             onPressed: () {
               controller.reload();
             },
-            icon: const Icon(
-              Icons.refresh,
-            ),
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
       body: Column(
         children: [
           if (loadingProgress < 100)
-            LinearProgressIndicator(
-              value:
-                  loadingProgress / 100,
-            ),
-          Expanded(
-            child: WebViewWidget(
-              controller: controller,
-            ),
-          ),
+            LinearProgressIndicator(value: loadingProgress / 100),
+          Expanded(child: WebViewWidget(controller: controller)),
         ],
       ),
     );
