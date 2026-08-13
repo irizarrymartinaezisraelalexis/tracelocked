@@ -19,12 +19,20 @@ class DBScanResult(Base):
 
     profile_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("privacy_profiles.id", ondelete="CASCADE"),
+        ForeignKey(
+            "privacy_profiles.id",
+            ondelete="CASCADE",
+        ),
         index=True,
     )
 
-    source_name: Mapped[str] = mapped_column(String(255))
-    source_url: Mapped[str] = mapped_column(String(1000))
+    source_name: Mapped[str] = mapped_column(
+        String(255),
+    )
+
+    source_url: Mapped[str] = mapped_column(
+        String(1000),
+    )
 
     matched_name: Mapped[str | None] = mapped_column(
         String(255),
@@ -46,7 +54,9 @@ class DBScanResult(Base):
         nullable=True,
     )
 
-    confidence_score: Mapped[int] = mapped_column(Integer)
+    confidence_score: Mapped[int] = mapped_column(
+        Integer,
+    )
 
     status: Mapped[str] = mapped_column(
         String(50),
@@ -56,4 +66,14 @@ class DBScanResult(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
+    )
+
+    removal_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    removed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
